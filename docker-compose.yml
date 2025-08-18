@@ -1,0 +1,100 @@
+services:
+  backend:
+    build: ./backend
+    ports:
+      - '3006:3000'
+    env_file:
+      - .env
+    depends_on:
+      - db
+    environment:
+      - NODE_ENV=development
+      - LOG_DIR=/app/log
+    volumes:
+      - ./backend/prisma:/app/prisma
+
+  frontend:
+    build: ./frontend
+    ports:
+      - '5176:80'
+    depends_on:
+      - backend
+
+  db:
+    image: postgres:16-alpine
+    restart: always
+    env_file:
+      - .env
+    ports:
+      - '5436:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  prisma-studio:
+    build: ./backend
+    command: npx prisma studio --port 5555 --hostname 0.0.0.0
+    env_file:
+      - .env
+    ports:
+      - '5556:5555'
+    depends_on:
+      - db
+    volumes:
+      - ./backend/prisma:/app/prisma:ro
+
+  prometheus:
+    image: prom/prometheus
+    ports:
+      - '9090:9090'
+    volumes:
+      - ./prometheus:/etc/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.retention.time=7d'
+    restart: always
+
+  grafana:
+    image: grafana/grafana
+    ports:
+      - '3009:3000'
+    env_file:
+      - .env
+    depends_on:
+      - prometheus
+    restart: always
+    volumes:
+      - grafana_data:/var/lib/grafana
+  loki:
+    image: grafana/loki:2.9.4
+    ports:
+      - '3100:3100'
+    command: -config.file=/etc/loki/local-config.yaml
+    volumes:
+      - ./loki:/etc/loki
+    restart: always
+
+  promtail:
+    image: grafana/promtail:2.9.4
+    volumes:
+      - ./promtail:/etc/promtail
+      - /var/log:/var/log:ro
+
+  db-backup:
+    image: postgres:16-alpine
+    depends_on:
+      - db
+    env_file:
+      - .env
+    volumes:
+      - ./db_backups:/backups
+    entrypoint:
+      [
+        'sh',
+        '-c',
+        'pg_dump -h db -U postgres -F c -b -v -f /backups/backup_$(date +%Y%m%d_%H%M%S).dump postgres',
+      ]
+
+volumes:
+  postgres_data:
+  db_backups:
+  grafana_data:

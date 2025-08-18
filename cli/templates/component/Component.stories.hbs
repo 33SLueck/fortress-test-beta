@@ -1,0 +1,61 @@
+import type { Meta, StoryObj } from '@storybook/react';
+import {{pascalName}} from './{{pascalName}}';
+
+const meta: Meta<typeof {{pascalName}}> = {
+  title: 'Components/{{pascalName}}',
+  component: {{pascalName}},
+  parameters: {
+    layout: 'centered',
+    docs: {
+      description: {
+        component: 'A reusable {{pascalName}} component with interactive features.',
+      },
+    },
+  },
+  tags: ['autodocs'],
+  argTypes: {
+    title: {
+      control: 'text',
+      description: 'The title to display',
+    },
+    className: {
+      control: 'text',
+      description: 'Additional CSS classes',
+    },
+    onClick: {
+      action: 'clicked',
+      description: 'Click handler function',
+    },
+  },
+};
+
+export default meta;
+type Story = StoryObj<typeof meta>;
+
+export const Default: Story = {
+  args: {},
+};
+
+export const WithCustomTitle: Story = {
+  args: {
+    title: 'Custom {{pascalName}} Title',
+  },
+};
+
+export const WithChildren: Story = {
+  args: {
+    children: (
+      <div>
+        <p>This is custom content inside the {{pascalName}} component.</p>
+        <button>Custom Button</button>
+      </div>
+    ),
+  },
+};
+
+export const WithCustomClass: Story = {
+  args: {
+    className: 'border-2 border-blue-500',
+    title: 'Styled {{pascalName}}',
+  },
+};
